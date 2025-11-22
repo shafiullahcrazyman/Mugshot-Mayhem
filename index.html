@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mugshot Mayhem by Shafiullah</title>
+    <!-- Manifest for Android/Chrome -->
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS / Safari Home Screen -->
+<link rel="apple-touch-icon" href="icon.png">
+
+<!-- Favicon fallback -->
+<link rel="icon" href="icon.png">
+
+<!-- Theme colors -->
+<meta name="theme-color" content="#020202">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mugshot Mayhem">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Orbitron', sans-serif;
+            touch-action: none;
+            user-select: none;
+            color: #fff;
+        }
+
+        #gameCanvas {
+            display: block;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            color: #00f3ff;
+            text-shadow: 0 0 10px #00f3ff;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-reset-corner {
+            font-size: 10px;
+            background: transparent;
+            border: 1px solid #333;
+            color: #555;
+            padding: 5px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: 0.2s;
+        }
+        .btn-reset-corner:hover {
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 8, 12, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            pointer-events: auto;
+            z-index: 10;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+
+        #start-screen::-webkit-scrollbar, #game-over-screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 30px 0 20px 0;
+            text-transform: uppercase;
+            text-align: center;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 4px; 
+            line-height: 1.2;
+            text-shadow: 
+                4px 4px 0px #0088ff, 
+                0 0 15px #00f3ff,
+                0 0 30px #00f3ff;
+        }
+        
+        .intro-text {
+            color: #aaa; 
+            margin-bottom: 15px; 
+            font-size: 0.9rem; 
+            text-align: center;
+            width: 100%;
+        }
+
+        .config-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .config-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 15px;
+            width: 220px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .config-card:hover {
+            border-color: #00f3ff;
+            background: rgba(0, 243, 255, 0.05);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #00f3ff;
+        }
+
+        .preview-box {
+            width: 70px;
+            height: 70px;
+            background: #000;
+            border: 2px dashed #555;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-input-group {
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .file-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-bottom: 2px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        input[type="file"] {
+            font-size: 0.7rem;
+            width: 100%;
+            color: transparent; 
+        }
+        input[type="file"]::file-selector-button {
+            font-size: 0.7rem;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-family: 'Roboto', sans-serif;
+        }
+        input[type="file"]::-webkit-file-upload-button {
+            font-size: 0.7rem;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .status-badge {
+            font-size: 0.6rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            background: #333;
+            color: #aaa;
+            margin-left: 5px;
+        }
+        .status-badge.saved { background: #00f3ff; color: #000; font-weight: bold; }
+
+        .btn {
+            padding: 15px 50px;
+            background: linear-gradient(45deg, #00f3ff, #0088ff);
+            border: none;
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: transform 0.1s;
+            margin-bottom: 20px;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn:hover { box-shadow: 0 0 50px rgba(0, 243, 255, 0.6); }
+
+        .hidden { display: none !important; }
+        
+        .mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-sizing: border-box;
+            opacity: 0.5;
+        }
+        
+        .control-zone {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .btn-config-open {
+            background: transparent;
+            border: 1px solid #00f3ff;
+            color: #00f3ff;
+            padding: 8px 25px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-bottom: 20px; 
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-config-open:hover {
+            background: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+
+        #settings-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .settings-content {
+            background: #0a0a10;
+            border: 1px solid #00f3ff;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+            text-align: center;
+        }
+
+        .settings-row {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .settings-label {
+            color: #00f3ff;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: #00f3ff;
+            cursor: pointer;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 10px 0;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .modal-btn:hover {
+            border-color: #00f3ff;
+            color: #fff;
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .config-container { flex-direction: column; align-items: center; }
+            .mobile-controls { display: flex; }
+            h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div id="score-display">SCORE: 0</div>
+            <div id="health-display">HP: 100%</div>
+        </div>
+        <div class="mobile-controls">
+            <div class="control-zone">MOVE</div>
+            <div class="control-zone">SHOOT</div>
+        </div>
+    </div>
+
+    <div id="start-screen">
+        <h1>Mugshot Mayhem</h1>
+        
+        <p class="intro-text">Setup your targets. Data is saved locally.</p>
+        
+        <button id="btn-open-config" class="btn-config-open">SYSTEM CONFIG</button>
+
+        <div class="config-container">
+            <div class="config-card">
+                <div class="card-title">Large Target <span id="status-3" class="status-badge">Default</span></div>
+                <div class="preview-box">
+                    <img id="preview-img-3" class="preview-img" src="">
+                </div>
+                <div class="file-input-group">
+                    <span class="file-label">Face:</span>
+                    <input type="file" accept="image/*" onchange="handleImageUpload(this, 3)">
+                </div>
+                <div class="file-input-group">
+                    <span class="file-label">Sound:</span>
+                    <input type="file" accept="audio/*" onchange="handleAudioUpload(this, 3)">
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="card-title">Medium Target <span id="status-2" class="status-badge">Default</span></div>
+                <div class="preview-box">
+                    <img id="preview-img-2" class="preview-img" src="">
+                </div>
+                <div class="file-input-group">
+                    <span class="file-label">Face:</span>
+                    <input type="file" accept="image/*" onchange="handleImageUpload(this, 2)">
+                </div>
+                <div class="file-input-group">
+                    <span class="file-label">Sound:</span>
+                    <input type="file" accept="audio/*" onchange="handleAudioUpload(this, 2)">
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="card-title">Small Target <span id="status-1" class="status-badge">Default</span></div>
+                <div class="preview-box">
+                    <img id="preview-img-1" class="preview-img" src="">
+                </div>
+                <div class="file-input-group">
+                    <span class="file-label">Face:</span>
+                    <input type="file" accept="image/*" onchange="handleImageUpload(this, 1)">
+                </div>
+                <div class="file-input-group">
+                    <span class="file-label">Sound:</span>
+                    <input type="file" accept="audio/*" onchange="handleAudioUpload(this, 1)">
+                </div>
+            </div>
+        </div>
+
+        <button class="btn" id="start-btn">LAUNCH</button>
+        
+        <button class="btn-reset-corner" onclick="StorageSys.clearData()">Reset Saved Data</button>
+    </div>
+
+    <div id="settings-modal" class="hidden">
+        <div class="settings-content">
+            <h2 style="margin-top:0; color:#00f3ff;">SYSTEM CONFIG</h2>
+            
+            <div class="settings-row">
+                <div class="settings-label"><span>Background Music</span> <span id="val-music">50%</span></div>
+                <input type="range" id="music-slider" min="0" max="100" value="50">
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label"><span>SFX Volume</span> <span id="val-sfx">50%</span></div>
+                <input type="range" id="sfx-slider" min="0" max="100" value="50">
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed #333; margin: 20px 0;">
+
+            <div class="settings-row">
+                <div class="settings-label"><span>Game Speed</span> <span id="val-speed">1.0x</span></div>
+                <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+            </div>
+
+            <div class="settings-row">
+                <div class="settings-label"><span>Difficulty (Spawn Rate)</span> <span id="val-diff">Normal</span></div>
+                <input type="range" id="diff-slider" min="1" max="5" step="1" value="3">
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn" id="close-settings-btn">CLOSE</button>
+                <button class="modal-btn" id="reset-settings-btn">RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" class="hidden">
+        <h1 style="margin-top: 20vh;">GAME OVER</h1>
+        <p id="final-score" style="font-size: 2rem; color: #fff;">Score: 0</p>
+        <button class="btn" id="restart-btn">RETRY</button>
+        <button class="btn" id="home-btn">HOME</button>
+    </div>
+
+    <script>
+        const GameSettings = {
+            musicVol: 0.5,
+            sfxVol: 0.5,
+            gameSpeed: 1.0,
+            difficulty: 3 
+        };
+
+        const DEFAULTS = {
+            3: "https://api.dicebear.com/9.x/avataaars/svg?seed=Felix&backgroundColor=ffdfbf",
+            2: "https://api.dicebear.com/9.x/avataaars/svg?seed=Aneka&backgroundColor=c0aede",
+            1: "https://api.dicebear.com/9.x/avataaars/svg?seed=Bandit&backgroundColor=b6e3f4"
+        };
+
+        const StorageSys = {
+            dbName: 'AsteroidDefenderDB',
+            storeName: 'assets',
+            db: null,
+            
+            // Key for Settings Cache
+            settingsKey: 'mugshot_settings',
+
+            init: function() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, 1);
+                    request.onerror = e => reject(e);
+                    request.onupgradeneeded = e => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName);
+                        }
+                    };
+                    request.onsuccess = e => {
+                        this.db = e.target.result;
+                        resolve(this.db);
+                    };
+                });
+            },
+
+            save: function(key, blob) {
+                if (!this.db) return;
+                const tx = this.db.transaction([this.storeName], 'readwrite');
+                tx.objectStore(this.storeName).put(blob, key);
+            },
+
+            load: function(key) {
+                return new Promise((resolve) => {
+                    if (!this.db) return resolve(null);
+                    const tx = this.db.transaction([this.storeName], 'readonly');
+                    const req = tx.objectStore(this.storeName).get(key);
+                    req.onsuccess = e => resolve(e.target.result);
+                    req.onerror = () => resolve(null);
+                });
+            },
+
+            // UPDATED: Clears DB AND Settings Cache
+            clearData: function() {
+                if(confirm("Delete all your custom faces, sounds, and settings?")) {
+                    const tx = this.db.transaction([this.storeName], 'readwrite');
+                    tx.objectStore(this.storeName).clear();
+                    
+                    // Clear Settings Cache
+                    localStorage.removeItem(this.settingsKey);
+                    
+                    location.reload();
+                }
+            }
+        };
+
+        const Assets = {
+            images: {
+                3: { src: DEFAULTS[3], imgObj: new Image() },
+                2: { src: DEFAULTS[2], imgObj: new Image() },
+                1: { src: DEFAULTS[1], imgObj: new Image() }
+            },
+            audioBuffers: { 3: null, 2: null, 1: null }
+        };
+
+        async function initAssets() {
+            await StorageSys.init();
+
+            // LOAD SAVED SETTINGS ON STARTUP
+            const savedSettings = localStorage.getItem(StorageSys.settingsKey);
+            if(savedSettings) {
+                try {
+                    const parsed = JSON.parse(savedSettings);
+                    Object.assign(GameSettings, parsed);
+                    
+                    // Update UI elements to match saved state
+                    document.getElementById('music-slider').value = GameSettings.musicVol * 100;
+                    document.getElementById('val-music').innerText = Math.round(GameSettings.musicVol * 100) + "%";
+                    
+                    document.getElementById('sfx-slider').value = GameSettings.sfxVol * 100;
+                    document.getElementById('val-sfx').innerText = Math.round(GameSettings.sfxVol * 100) + "%";
+                    
+                    document.getElementById('speed-slider').value = GameSettings.gameSpeed;
+                    document.getElementById('val-speed').innerText = GameSettings.gameSpeed + "x";
+                    
+                    document.getElementById('diff-slider').value = GameSettings.difficulty;
+                    const labels = ["Easy", "Easy", "Normal", "Hard", "Insane"];
+                    document.getElementById('val-diff').innerText = labels[GameSettings.difficulty-1] || "Normal";
+                    
+                } catch(e) { console.log("Settings parse error", e); }
+            }
+
+            for(let i=1; i<=3; i++) {
+                const storedImgBlob = await StorageSys.load(`img_${i}`);
+                if (storedImgBlob) {
+                    const url = URL.createObjectURL(storedImgBlob);
+                    Assets.images[i].src = url;
+                    document.getElementById(`status-${i}`).classList.add('saved');
+                    document.getElementById(`status-${i}`).innerText = "Loaded";
+                }
+                Assets.images[i].imgObj.src = Assets.images[i].src;
+                document.getElementById(`preview-img-${i}`).src = Assets.images[i].src;
+
+                const storedAudioBlob = await StorageSys.load(`audio_${i}`);
+                if (storedAudioBlob) {
+                    const arrayBuffer = await storedAudioBlob.arrayBuffer();
+                    Assets.audioBuffers[i] = { raw: arrayBuffer, decoded: null }; 
+                    document.getElementById(`status-${i}`).classList.add('saved');
+                }
+            }
+        }
+        window.onload = initAssets;
+
+        function handleImageUpload(input, id) {
+            if (input.files && input.files[0]) {
+                input.style.color = "#fff"; 
+                
+                const file = input.files[0];
+                StorageSys.save(`img_${id}`, file); 
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    Assets.images[id].imgObj.src = e.target.result;
+                    document.getElementById(`preview-img-${id}`).src = e.target.result;
+                    document.getElementById(`status-${id}`).classList.add('saved');
+                    document.getElementById(`status-${id}`).innerText = "Saved";
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleAudioUpload(input, id) {
+            if (input.files && input.files[0]) {
+                input.style.color = "#fff"; 
+
+                const file = input.files[0];
+                StorageSys.save(`audio_${id}`, file); 
+
+                AudioSys.init(); 
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    AudioSys.ctx.decodeAudioData(e.target.result, function(buffer) {
+                        const trimmed = AudioSys.trimSilence(buffer);
+                        Assets.audioBuffers[id] = { raw: null, decoded: trimmed };
+                        document.getElementById(`status-${id}`).classList.add('saved');
+                        document.getElementById(`status-${id}`).innerText = "Saved";
+                        AudioSys.previewSound(trimmed);
+                    });
+                }
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        const AudioSys = {
+            ctx: null,
+            masterGain: null,
+            musicGain: null,
+            sfxGain: null,
+            noiseBuffer: null,
+            
+            playlist: [
+                "song1.mp3", 
+                "song2.mp3",
+                "song3.mp3"
+            ],
+            currentTrackIndex: 0,
+            musicElement: null,
+            musicNode: null,
+
+            init: function() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                    
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.connect(this.ctx.destination);
+
+                    this.musicGain = this.ctx.createGain();
+                    this.musicGain.gain.value = GameSettings.musicVol;
+                    this.musicGain.connect(this.masterGain);
+
+                    this.sfxGain = this.ctx.createGain();
+                    this.sfxGain.gain.value = GameSettings.sfxVol;
+                    this.sfxGain.connect(this.masterGain);
+
+                    this.musicElement = new Audio();
+                    this.musicElement.crossOrigin = "anonymous";
+                    this.musicElement.loop = false;
+                    
+                    try {
+                        this.musicNode = this.ctx.createMediaElementSource(this.musicElement);
+                        this.musicNode.connect(this.musicGain);
+                    } catch(e) { console.log("Audio source already connected"); }
+
+                    this.musicElement.addEventListener('ended', () => {
+                        this.currentTrackIndex++;
+                        if(this.currentTrackIndex >= this.playlist.length) {
+                            this.currentTrackIndex = 0; 
+                        }
+                        this.playTrack(this.currentTrackIndex);
+                    });
+
+                    const bufferSize = this.ctx.sampleRate * 1; 
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    this.noiseBuffer = buffer;
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+
+            playTrack: function(index) {
+                if(!this.musicElement || !this.playlist.length) return;
+                this.musicElement.pause();
+                this.musicElement.src = this.playlist[index];
+                this.musicElement.play().catch(e => console.log("Playback failed:", e));
+            },
+
+            startPlaylist: function() {
+                if(!this.ctx) this.init();
+                this.currentTrackIndex = 0;
+                this.playTrack(0);
+            },
+
+            stopPlaylist: function() {
+                if(this.musicElement) {
+                    this.musicElement.pause();
+                    this.musicElement.currentTime = 0;
+                }
+            },
+
+            playGameStart: function() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                
+                osc.frequency.setValueAtTime(200, t);
+                osc.frequency.exponentialRampToValueAtTime(800, t+0.6);
+                
+                g.gain.setValueAtTime(0.8, t);
+                g.gain.linearRampToValueAtTime(0, t+0.6);
+                
+                osc.connect(g); 
+                g.connect(this.sfxGain); 
+                osc.start(t); osc.stop(t+0.6);
+            },
+
+            playGameOver: function() {
+                if (!this.ctx) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.exponentialRampToValueAtTime(10, t+1.5);
+                
+                g.gain.setValueAtTime(0.8, t);
+                g.gain.linearRampToValueAtTime(0, t+1.5);
+                
+                osc.connect(g); 
+                g.connect(this.sfxGain); 
+                osc.start(t); osc.stop(t+1.5);
+            },
+
+            trimSilence: function(buffer) {
+                const raw = buffer.getChannelData(0);
+                const len = raw.length;
+                let start = 0;
+                let end = len - 1;
+                const threshold = 0.01;
+
+                while (start < len && Math.abs(raw[start]) < threshold) start++;
+                while (end > start && Math.abs(raw[end]) < threshold) end--;
+
+                if (start >= end) return buffer;
+
+                const duration = end - start;
+                const newBuffer = this.ctx.createBuffer(buffer.numberOfChannels, duration, buffer.sampleRate);
+
+                for (let i = 0; i < buffer.numberOfChannels; i++) {
+                    const ch = buffer.getChannelData(i);
+                    const newCh = newBuffer.getChannelData(i);
+                    for (let j = 0; j < duration; j++) {
+                        newCh[j] = ch[start + j];
+                    }
+                }
+                return newBuffer;
+            },
+
+            playCustom: function(id) {
+                if (!this.ctx) return;
+                const audioObj = Assets.audioBuffers[id];
+                
+                if (audioObj && audioObj.decoded) {
+                    const src = this.ctx.createBufferSource();
+                    src.buffer = audioObj.decoded;
+                    src.connect(this.sfxGain); 
+                    src.start();
+                } else {
+                    this.playDefaultSynth(id);
+                }
+            },
+
+            decodePending: async function() {
+                if (!this.ctx) this.init();
+                for(let i=1; i<=3; i++) {
+                    if (Assets.audioBuffers[i] && Assets.audioBuffers[i].raw && !Assets.audioBuffers[i].decoded) {
+                        const buffer = await this.ctx.decodeAudioData(Assets.audioBuffers[i].raw);
+                        Assets.audioBuffers[i].decoded = this.trimSilence(buffer);
+                    }
+                }
+            },
+
+            playDefaultSynth: function(id) {
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                const pitch = id === 3 ? 100 : (id === 2 ? 300 : 600);
+                osc.frequency.setValueAtTime(pitch, t);
+                osc.frequency.exponentialRampToValueAtTime(10, t + 0.2);
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                osc.connect(gain);
+                gain.connect(this.sfxGain); 
+                osc.start();
+                osc.stop(t + 0.2);
+            },
+
+            playShoot: function() {
+                if (!this.ctx || !this.noiseBuffer) return;
+                const t = this.ctx.currentTime;
+
+                const osc = this.ctx.createOscillator();
+                const oscGain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, t);
+                osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+                oscGain.gain.setValueAtTime(0.3, t);
+                oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                
+                osc.connect(oscGain);
+                oscGain.connect(this.sfxGain); 
+                osc.start();
+                osc.stop(t + 0.1);
+
+                const noiseSrc = this.ctx.createBufferSource();
+                noiseSrc.buffer = this.noiseBuffer;
+                
+                const noiseFilter = this.ctx.createBiquadFilter();
+                noiseFilter.type = 'lowpass';
+                noiseFilter.frequency.setValueAtTime(2000, t);
+                noiseFilter.frequency.linearRampToValueAtTime(500, t + 0.15);
+
+                const noiseGain = this.ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.4, t);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+                noiseSrc.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(this.sfxGain); 
+                noiseSrc.start();
+                noiseSrc.stop(t + 0.15);
+            },
+
+            previewSound: function(buffer) {
+                const src = this.ctx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(this.sfxGain); 
+                src.start();
+            }
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const scoreDisplay = document.getElementById('score-display');
+        const healthDisplay = document.getElementById('health-display');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let gameRunning = false;
+        let score = 0;
+        let lastTime = 0;
+        
+        let entities = {
+            player: null,
+            bullets: [],
+            asteroids: [],
+            particles: [],
+            stars: []
+        };
+        
+        const keys = { w: false, a: false, s: false, d: false };
+        const mouse = { x: 0, y: 0, down: false };
+        const touches = { left: {active:false, x:0, y:0, sx:0, sy:0, id:null}, right: {active:false, x:0, y:0, sx:0, sy:0, id:null} };
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            entities.stars = [];
+            for(let i=0; i<180; i++) {
+                const depth = Math.random();
+                entities.stars.push({
+                    x: Math.random()*width, 
+                    y: Math.random()*height, 
+                    depth: depth, 
+                    size: depth * 1.5 + 0.5, 
+                    alpha: Math.random() * 0.5 + 0.5
+                });
+            }
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Player {
+            constructor() {
+                this.x = width/2; this.y = height - 100; 
+                this.vx = 0; this.vy = 0;
+                this.angle = -Math.PI/2; 
+                this.hp = 100;
+                this.lastShot = 0;
+                this.invuln = 0;
+            }
+            update() {
+                let ax = 0, ay = 0;
+                if(keys.w) ay = -1; if(keys.s) ay = 1;
+                if(keys.a) ax = -1; if(keys.d) ax = 1;
+                
+                if(touches.left.active) {
+                    let dx = touches.left.x - touches.left.sx;
+                    let dy = touches.left.y - touches.left.sy;
+                    let dist = Math.hypot(dx, dy);
+                    let max = 50;
+                    if(dist > 0) {
+                        ax = (dx/dist) * Math.min(dist, max)/max;
+                        ay = (dy/dist) * Math.min(dist, max)/max;
+                    }
+                }
+
+                this.vx += ax * 0.8;
+                this.vy += ay * 0.8;
+                this.vx *= 0.94; this.vy *= 0.94; 
+                this.x += this.vx; this.y += this.vy;
+
+                this.x = Math.max(20, Math.min(width-20, this.x));
+                this.y = Math.max(20, Math.min(height-20, this.y));
+
+                if(touches.right.active) {
+                    let dx = touches.right.x - touches.right.sx;
+                    let dy = touches.right.y - touches.right.sy;
+                    if(Math.hypot(dx, dy) > 10) {
+                        this.angle = Math.atan2(dy, dx);
+                        this.shoot(Date.now());
+                    }
+                } else {
+                    this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+                    if(mouse.down) this.shoot(Date.now());
+                }
+
+                if(this.invuln > 0) this.invuln--;
+            }
+            shoot(now) {
+                if(now - this.lastShot > 150) {
+                    entities.bullets.push({
+                        x: this.x + Math.cos(this.angle)*25, 
+                        y: this.y + Math.sin(this.angle)*25,
+                        vx: Math.cos(this.angle)*15, 
+                        vy: Math.sin(this.angle)*15,
+                        life: 200,
+                        angle: this.angle,
+                        color: `hsl(${Math.random()*360}, 100%, 50%)`
+                    });
+                    this.lastShot = now;
+                    this.vx -= Math.cos(this.angle)*1.5;
+                    this.vy -= Math.sin(this.angle)*1.5;
+                    AudioSys.playShoot();
+                }
+            }
+            draw(ctx) {
+                if(this.invuln > 0 && Math.floor(Date.now()/100)%2) return;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                const speed = Math.hypot(this.vx, this.vy);
+                if(speed > 0.5) {
+                    ctx.beginPath();
+                    ctx.moveTo(-15, -3);
+                    ctx.lineTo(-35 - Math.random()*10, 0);
+                    ctx.lineTo(-15, 3);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(-15, -6);
+                    ctx.lineTo(-30 - Math.random()*15, 0);
+                    ctx.lineTo(-15, 6);
+                    ctx.fillStyle = 'rgba(255, 100, 0, 0.6)';
+                    ctx.fill();
+                }
+
+                let grad = ctx.createLinearGradient(20, 0, -15, 0);
+                grad.addColorStop(0, '#ccc'); 
+                grad.addColorStop(0.4, '#666'); 
+                grad.addColorStop(1, '#333'); 
+
+                ctx.beginPath();
+                ctx.moveTo(20, 0); 
+                ctx.lineTo(-10, 15); 
+                ctx.lineTo(-5, 5);  
+                ctx.lineTo(-15, 5); 
+                ctx.lineTo(-15, -5); 
+                ctx.lineTo(-5, -5);  
+                ctx.lineTo(-10, -15); 
+                ctx.closePath();
+                
+                ctx.fillStyle = grad;
+                ctx.fill();
+                
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI*2);
+                ctx.fillStyle = '#00f3ff';
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.ellipse(1, -1, 2, 1, 0, 0, Math.PI*2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        function createJaggedPoly(radius) {
+            const points = [];
+            const numPoints = 8 + Math.floor(Math.random() * 5);
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints) * Math.PI * 2;
+                const r = radius * (0.8 + Math.random() * 0.4); 
+                points.push({
+                    x: Math.cos(angle) * r,
+                    y: Math.sin(angle) * r
+                });
+            }
+            return points;
+        }
+
+        function spawnAsteroid() {
+            let spawnType = Math.random();
+            let x, y, vx, vy;
+
+            if (spawnType < 0.8) {
+                x = Math.random() * width;
+                y = -60;
+            } else if (spawnType < 0.9) {
+                x = -60;
+                y = Math.random() * (height * 0.6); 
+            } else {
+                x = width + 60;
+                y = Math.random() * (height * 0.6); 
+            }
+
+            let id = Math.random() < 0.3 ? 3 : (Math.random() < 0.6 ? 2 : 1);
+            
+            let userDiff = GameSettings.difficulty;
+            let scoreMult = 1 + (score / 5000); 
+            let combinedDiff = scoreMult * (userDiff / 3);
+
+            let dx = entities.player.x - x;
+            let dy = entities.player.y - y;
+            let dist = Math.hypot(dx, dy);
+            
+            let dirX = dx / dist;
+            let dirY = dy / dist;
+
+            let speed = ((4 - id) * 0.5) * combinedDiff * GameSettings.gameSpeed;
+            
+            let jitterAmount = Math.max(0.1, 0.5 - (score / 10000));
+            let jitter = (Math.random() - 0.5) * jitterAmount;
+
+            vx = (dirX + jitter) * speed;
+            vy = (dirY + jitter) * speed;
+
+            entities.asteroids.push({
+                x: x, y: y, id: id,
+                vx: vx, 
+                vy: vy,
+                radius: id*15 + 10,
+                rot: 0, drot: (Math.random()-0.5)*0.1,
+                poly: createJaggedPoly(id*15 + 10) 
+            });
+        }
+
+        async function init() {
+            AudioSys.init();
+            await AudioSys.decodePending(); 
+
+            AudioSys.playGameStart();
+            AudioSys.startPlaylist();
+
+            entities.player = new Player();
+            entities.bullets = [];
+            entities.asteroids = [];
+            entities.particles = [];
+            score = 0;
+            scoreDisplay.innerText = "SCORE: 0";
+            healthDisplay.innerText = "HP: 100%";
+            gameRunning = true;
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            requestAnimationFrame(loop);
+        }
+
+        function loop(ts) {
+            if(!gameRunning) return;
+            let dt = ts - lastTime;
+            lastTime = ts;
+
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0,0,width,height);
+            
+            entities.stars.forEach(s => {
+                let baseSpeed = 0.5; 
+                if (entities.player) {
+                    if(entities.player.vy < 0) baseSpeed += Math.abs(entities.player.vy) * 0.5;
+                    if(entities.player.vy > 0) baseSpeed -= Math.abs(entities.player.vy) * 0.2;
+                    s.x -= entities.player.vx * 0.1 * s.depth;
+                }
+                
+                s.y += baseSpeed * s.depth; 
+                
+                if(s.x < 0) s.x += width;
+                if(s.x > width) s.x -= width;
+                if(s.y > height) s.y -= height;
+
+                let color;
+                if (s.depth < 0.3) {
+                    color = `rgba(255, 100, 100, ${s.alpha})`; 
+                } else if (s.depth < 0.7) {
+                    color = `rgba(255, 200, 100, ${s.alpha})`; 
+                } else {
+                    color = `rgba(200, 240, 255, ${s.alpha})`; 
+                }
+
+                ctx.fillStyle = color;
+                ctx.beginPath(); 
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); 
+                ctx.fill();
+            });
+
+            entities.player.update();
+            entities.player.draw(ctx);
+
+            for(let i=entities.bullets.length-1; i>=0; i--) {
+                let b = entities.bullets[i];
+                b.x += b.vx; b.y += b.vy; b.life--;
+                
+                ctx.save();
+                ctx.translate(b.x, b.y);
+                ctx.rotate(b.angle);
+                
+                ctx.shadowColor = b.color;
+                ctx.shadowBlur = 10;
+                
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.roundRect(-8, -2, 16, 4, 2); 
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = b.color;
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.roundRect(-10, -4, 20, 8, 4);
+                ctx.fill();
+                
+                ctx.restore();
+
+                if(b.life <= 0) entities.bullets.splice(i,1);
+            }
+
+            let diffMult = GameSettings.difficulty / 3; 
+            let spawnRate = (0.02 + Math.min(0.08, score * 0.00001)) * diffMult;
+            
+            if(Math.random() < spawnRate) spawnAsteroid();
+
+            for(let i=entities.asteroids.length-1; i>=0; i--) {
+                let a = entities.asteroids[i];
+                a.x += a.vx * GameSettings.gameSpeed; 
+                a.y += a.vy * GameSettings.gameSpeed; 
+                a.rot += a.drot;
+                
+                ctx.save();
+                ctx.translate(a.x, a.y);
+                ctx.rotate(a.rot);
+                
+                let color = a.id===3 ? '#ff0055' : (a.id===2 ? '#bf00ff' : '#00ffaa');
+                ctx.strokeStyle = color;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 10;
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(a.poly[0].x, a.poly[0].y);
+                for(let k=1; k<a.poly.length; k++) {
+                    ctx.lineTo(a.poly[k].x, a.poly[k].y);
+                }
+                ctx.closePath();
+                
+                ctx.save();
+                ctx.clip();
+                ctx.globalAlpha = 0.8;
+                let img = Assets.images[a.id].imgObj;
+                if(img.complete) {
+                    ctx.drawImage(img, -a.radius*1.2, -a.radius*1.2, a.radius*2.4, a.radius*2.4);
+                } else {
+                    ctx.fillStyle = '#444'; ctx.fill();
+                }
+                ctx.restore();
+                
+                ctx.stroke(); 
+                ctx.restore();
+
+                let p = entities.player;
+                if(p.invuln <= 0 && Math.hypot(p.x-a.x, p.y-a.y) < p.angle+15 + a.radius) {
+                    p.hp -= 25;
+                    p.invuln = 120;
+                    healthDisplay.innerText = `HP: ${p.hp}%`;
+                    createParticles(a.x, a.y, color);
+                    entities.asteroids.splice(i,1);
+                    AudioSys.playCustom(a.id); 
+                    if(p.hp <= 0) endGame();
+                    continue;
+                }
+
+                for(let j=entities.bullets.length-1; j>=0; j--) {
+                    let b = entities.bullets[j];
+                    if(Math.hypot(b.x-a.x, b.y-a.y) < a.radius + 5) {
+                        entities.bullets.splice(j,1);
+                        entities.asteroids.splice(i,1);
+                        createParticles(a.x, a.y, color);
+                        AudioSys.playCustom(a.id);
+                        score += a.id * 100;
+                        scoreDisplay.innerText = `SCORE: ${score}`;
+                        break;
+                    }
+                }
+            }
+
+            for(let i=entities.particles.length-1; i>=0; i--) {
+                let p = entities.particles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.c;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1;
+                if(p.life <= 0) entities.particles.splice(i,1);
+            }
+            
+            if(touches.left.active) {
+                ctx.strokeStyle = 'rgba(0,255,255,0.3)';
+                ctx.beginPath(); ctx.arc(touches.left.sx, touches.left.sy, 50, 0, Math.PI*2); ctx.stroke();
+                ctx.fillStyle = 'rgba(0,255,255,0.5)';
+                ctx.beginPath(); ctx.arc(touches.left.x, touches.left.y, 20, 0, Math.PI*2); ctx.fill();
+            }
+            if(touches.right.active) {
+                ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+                ctx.beginPath(); ctx.arc(touches.right.sx, touches.right.sy, 50, 0, Math.PI*2); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,0,0,0.5)';
+                ctx.beginPath(); ctx.arc(touches.right.x, touches.right.y, 20, 0, Math.PI*2); ctx.fill();
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        function createParticles(x, y, c) {
+            for(let i=0; i<12; i++) {
+                let ang = Math.random()*Math.PI*2;
+                let spd = Math.random()*4;
+                entities.particles.push({
+                    x:x, y:y, 
+                    vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
+                    c:c, life:1
+                });
+            }
+        }
+
+        function endGame() {
+            AudioSys.stopPlaylist();
+            AudioSys.playGameOver();
+
+            gameRunning = false;
+            finalScoreDisplay.innerText = "Score: " + score;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        window.addEventListener('keydown', e => { if(e.key==='w')keys.w=true; if(e.key==='a')keys.a=true; if(e.key==='s')keys.s=true; if(e.key==='d')keys.d=true; });
+        window.addEventListener('keyup', e => { if(e.key==='w')keys.w=false; if(e.key==='a')keys.a=false; if(e.key==='s')keys.s=false; if(e.key==='d')keys.d=false; });
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mousedown', () => mouse.down = true);
+        window.addEventListener('mouseup', () => mouse.down = false);
+
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            for(let i=0; i<e.changedTouches.length; i++) {
+                let t = e.changedTouches[i];
+                if(t.clientX < width/2) {
+                    touches.left.active = true; touches.left.id = t.identifier;
+                    touches.left.sx = t.clientX; touches.left.sy = t.clientY;
+                    touches.left.x = t.clientX; touches.left.y = t.clientY;
+                } else {
+                    touches.right.active = true; touches.right.id = t.identifier;
+                    touches.right.sx = t.clientX; touches.right.sy = t.clientY;
+                    touches.right.x = t.clientX; touches.right.y = t.clientY;
+                }
+            }
+        }, {passive:false});
+        
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            for(let i=0; i<e.changedTouches.length; i++) {
+                let t = e.changedTouches[i];
+                if(t.identifier === touches.left.id) { touches.left.x = t.clientX; touches.left.y = t.clientY; }
+                if(t.identifier === touches.right.id) { touches.right.x = t.clientX; touches.right.y = t.clientY; }
+            }
+        }, {passive:false});
+
+        const touchEnd = e => {
+            e.preventDefault();
+            for(let i=0; i<e.changedTouches.length; i++) {
+                let t = e.changedTouches[i];
+                if(t.identifier === touches.left.id) touches.left.active = false;
+                if(t.identifier === touches.right.id) touches.right.active = false;
+            }
+        };
+        canvas.addEventListener('touchend', touchEnd);
+        canvas.addEventListener('touchcancel', touchEnd);
+
+        document.getElementById('start-btn').addEventListener('click', init);
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            init();
+        });
+
+        document.getElementById('home-btn').addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        });
+
+        // --- SETTINGS UI HANDLERS ---
+        const btnOpenConfig = document.getElementById('btn-open-config');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const resetSettingsBtn = document.getElementById('reset-settings-btn');
+
+        // Function to save settings to cache
+        function saveSettings() {
+            localStorage.setItem(StorageSys.settingsKey, JSON.stringify(GameSettings));
+        }
+
+        btnOpenConfig.addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        // Reset Logic (Modal Button)
+        resetSettingsBtn.addEventListener('click', () => {
+            // Reset State
+            GameSettings.musicVol = 0.5;
+            GameSettings.sfxVol = 0.5;
+            GameSettings.gameSpeed = 1.0;
+            GameSettings.difficulty = 3;
+
+            // Reset DOM Elements
+            document.getElementById('music-slider').value = 50;
+            document.getElementById('val-music').innerText = "50%";
+            
+            document.getElementById('sfx-slider').value = 50;
+            document.getElementById('val-sfx').innerText = "50%";
+            
+            document.getElementById('speed-slider').value = 1.0;
+            document.getElementById('val-speed').innerText = "1x";
+            
+            document.getElementById('diff-slider').value = 3;
+            document.getElementById('val-diff').innerText = "Normal";
+
+            // Apply Gains
+            if(AudioSys.musicGain) AudioSys.musicGain.gain.value = 0.5;
+            if(AudioSys.sfxGain) AudioSys.sfxGain.gain.value = 0.5;
+
+            // Save defaults to cache so they persist
+            saveSettings();
+        });
+
+        // Slider Inputs
+        document.getElementById('music-slider').addEventListener('input', (e) => {
+            const val = e.target.value;
+            GameSettings.musicVol = val / 100;
+            document.getElementById('val-music').innerText = val + "%";
+            if(AudioSys.musicGain) AudioSys.musicGain.gain.value = GameSettings.musicVol;
+            saveSettings();
+        });
+
+        document.getElementById('sfx-slider').addEventListener('input', (e) => {
+            const val = e.target.value;
+            GameSettings.sfxVol = val / 100;
+            document.getElementById('val-sfx').innerText = val + "%";
+            if(AudioSys.sfxGain) AudioSys.sfxGain.gain.value = GameSettings.sfxVol;
+            saveSettings();
+        });
+
+        document.getElementById('speed-slider').addEventListener('input', (e) => {
+            GameSettings.gameSpeed = parseFloat(e.target.value);
+            document.getElementById('val-speed').innerText = GameSettings.gameSpeed + "x";
+            saveSettings();
+        });
+
+        document.getElementById('diff-slider').addEventListener('input', (e) => {
+            const labels = ["Easy", "Easy", "Normal", "Hard", "Insane"];
+            const val = parseInt(e.target.value);
+            GameSettings.difficulty = val;
+            document.getElementById('val-diff').innerText = labels[val-1];
+            saveSettings();
+        });
+
+    </script>
+</body>
+</html>
